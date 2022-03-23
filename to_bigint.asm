@@ -3,6 +3,11 @@ section .bss
 
 section .data
 
+
+; https://stackoverflow.com/questions/59697603/how-to-use-malloc-in-asm
+; size_t ma 8 bajtów
+
+section .text
 ; rbx - counter pętel zewnętrznych
 ; rcx - adres wynikowej tablicy (na koniec przekażę go do rax)
 ; rdx - początkowa tablica, z której bierzemy dane, i iteracja po niej
@@ -12,12 +17,6 @@ section .data
 ; r11 - iteracja po wynikowej tablicy 
 ; r12 - iteracja po wnętrzach podtablic
 ; r13 - counter wewnętrznej pętli
-
-
-; https://stackoverflow.com/questions/59697603/how-to-use-malloc-in-asm
-; size_t ma 8 bajtów
-
-section .text
 extern malloc
 global to_bigint
 to_bigint:
@@ -26,6 +25,7 @@ push r12
 push r13
 mov rdx, rdi ; przekazanie żeby początkowa tablica była w rdx
 mov rdi, rsi ; przekazanie do rdi n
+imul rdi, 8
 push rdx
 push rsi
 call [rel malloc wrt ..got]
@@ -43,6 +43,7 @@ mov r11, rcx
 
 loop_alloc:
     mov rdi, r10
+    imul rdi, 8
     push rcx
     push rdx
     push rsi
@@ -61,6 +62,7 @@ loop_alloc:
     cmp rbx, rsi
     jne loop_alloc
 
+
 mov rbx, 0; zerujemy counter
 mov r11, rcx; zerujemy iterację po wynikowej tablicy    
 
@@ -69,6 +71,8 @@ mov r11, rcx; zerujemy iterację po wynikowej tablicy
 ; r11 - iteracja po wynikowej tablicy 
 ; r12 - iteracja po wnętrzach podtablic
 ; r13 - counter wewnętrznej pętli
+
+
     
 loop_move:
     mov r12, [r11]
@@ -91,7 +95,6 @@ loop_move:
     add rdx, 4 ; dodajemy 4, bo w tej pierwotnej tablicy są inty
     cmp rbx, rsi
     jne loop_move
-
 
 
 exit:
