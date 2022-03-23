@@ -12,7 +12,6 @@ substract:
     substract_loop:
         mov r8, [rdi]
         mov r9, [rsi]
-        ;sub r8, r9
         sbb r8, r9 ; jebać overflowy
         cmp r8, 0
         jge .no_overflow
@@ -130,6 +129,7 @@ push r12
 push r13
 mov rdx, rdi ; przekazanie żeby początkowa tablica była w rdx
 mov rdi, rsi ; przekazanie do rdi n
+imul rdi, 8
 push rdx
 push rsi
 call [rel malloc wrt ..got]
@@ -147,6 +147,7 @@ mov r11, rcx
 
 loop_alloc:
     mov rdi, r10
+    imul rdi, 8
     push rcx
     push rdx
     push rsi
@@ -165,6 +166,7 @@ loop_alloc:
     cmp rbx, rsi
     jne loop_alloc
 
+
 mov rbx, 0; zerujemy counter
 mov r11, rcx; zerujemy iterację po wynikowej tablicy    
 
@@ -173,6 +175,8 @@ mov r11, rcx; zerujemy iterację po wynikowej tablicy
 ; r11 - iteracja po wynikowej tablicy 
 ; r12 - iteracja po wnętrzach podtablic
 ; r13 - counter wewnętrznej pętli
+
+
     
 loop_move:
     mov r12, [r11]
@@ -196,16 +200,13 @@ loop_move:
     cmp rbx, rsi
     jne loop_move
 
-tobigint_exit:
+
+to_bigint_exit:
 mov rax, rcx ; to powinno byc
 pop r13
 pop r12
 pop rbx
 ret
-
-
-
-
 
 
 ; rcx - wynikowa tablica
@@ -219,6 +220,7 @@ polynomial_degree:
     push r10
     call to_bigint
     pop r10
+    
     ; teraz w rax jest wynikowa tablica, którą będziemy zmieniać
     mov rcx, rax ; przeniesienie wynikowej tablicy do rcx
     mov r11, r10
@@ -256,6 +258,6 @@ polynomial_degree:
 
     main_exit:
         mov rax, rbx
-    
+
 
 section .data
