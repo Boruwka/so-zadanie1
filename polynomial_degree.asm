@@ -209,17 +209,37 @@ pop rbx
 ret
 
 
+
+global polynomial_degree:
+polynomial_degree:
 ; rcx - wynikowa tablica
 ; r8, r9 - pomocnicze
 ; rbx - licznik iteracji
 ; r10 - n zmniejszające się
 ; r11 - n/8+2
-global polynomial_degree:
-polynomial_degree:
+
+    push rbx
+    
+    ; zaczniemy od odifowania n = 1, bo dla niego nie działa pętla
+    cmp rsi, 1
+    jne n_greater_than_1
+    mov rbx, -1
+    mov r8d, [rdi]
+    cmp r8, 0
+    je main_exit
+    mov rbx, 0
+    jmp main_exit
+    
+
+
+    n_greater_than_1:
     mov r10, rsi ; przenosimy n do r10
     push r10
+    sub rsp, 8
     call to_bigint
+    add rsp, 8
     pop r10
+    
     
     ; teraz w rax jest wynikowa tablica, którą będziemy zmieniać
     mov rcx, rax ; przeniesienie wynikowej tablicy do rcx
@@ -233,7 +253,9 @@ polynomial_degree:
         push rcx
         push r10
         push r11
+        sub rsp, 8
         call iteracja
+        add rsp, 8 ; wyrównanie stosu
         pop r11
         pop r10
         pop rcx
@@ -243,7 +265,9 @@ polynomial_degree:
         push rcx
         push r10
         push r11
+        sub rsp, 8
         call check_if_zero
+        add rsp, 8
         pop r11
         pop r10
         pop rcx
@@ -252,12 +276,14 @@ polynomial_degree:
         ; tutaj jesteśmy jeśli nie ma samych zer
         dec r10 ; zmniejszamy n bo mniej liczb rozważamy już
         inc rbx ; zwiększamy counter pętli
-        cmp r10, 0 ; jeśli zero to kończymy
+        cmp r10, 1 ; jeśli zero to kończymy
         jne main_loop
     
 
     main_exit:
         mov rax, rbx
+        pop rbx
+        ret
 
 
 section .data
