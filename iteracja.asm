@@ -9,30 +9,25 @@ section .text
 substract:
     push rbx
     mov rbx, 0 ; counter pętli
-    substract_loop:
+    clc
+    pushf
+    loop:
         mov r8, [rdi]
         mov r9, [rsi]
-        ;sub r8, r9
+        popf
         sbb r8, r9 ; jebać overflowy
-        cmp r8, 0
-        jge .no_overflow
-        ; tutaj jesteśmy jak jest overflow
-        ;cmp r9, 0
-        ;jl .minus_overflow
-        ; tutaj kod plus overflowu ; to wszystko zakomentowane tylko do testu
-        ;jmp .no_overflow
-        ;.minus_overflow:
-            ; tutaj kod minus overflowu
-        .no_overflow:
+        pushf
         mov [rdi], r8
         inc rbx
         add rdi, 8
         add rsi, 8
         cmp rbx, rdx ; czy osiągnęliśmy n
-        jl substract_loop
-    substract_exit:
+        jl loop
+    exit:
+        popf
         pop rbx
         ret
+
 
 
 global iteracja:
