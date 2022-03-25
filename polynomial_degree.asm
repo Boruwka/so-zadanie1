@@ -56,14 +56,12 @@ substract:
 
 
 
-
-global iteracja:
 iteracja:
 ; rcx - wynikowa tablica
 ; r10 - iterator po niej 
 ; rbx - counter pętli po tablicy
 ; r11 - n-1
-; r12 - n / 8 + 2
+; r12 - n / 8 + 2, lub rozmiar podtablic po prostu 
 ; r8, r9 - pomocnicze
 
 push rbx
@@ -71,9 +69,10 @@ push r12
 mov rcx, rdi ; przeniesienie adresu wynikowej tablicy
 mov r10, rcx ; przeniesienie adresu tablicy do iteratora po niej
 mov r11, rsi ; przeniesienie n
-mov r12, r11
-shr r12, 3 ; dzielenie przez 8
-add r12, 2 ; teraz w r12 mamy n/8+2
+mov r12, rdx ; rozmiar podtabilc będzie podany jako argument
+;mov r12, r11
+;shr r12, 3 ; dzielenie przez 8
+;add r12, 2 ; teraz w r12 mamy n/8+2
 dec r11 
 mov rbx, 0
 
@@ -101,6 +100,7 @@ iteracja_exit:
     pop r12
     pop rbx
     ret
+    
     
     
 
@@ -253,8 +253,6 @@ polynomial_degree:
     je main_exit
     mov rbx, 0
     jmp main_exit
-    
-
 
     n_greater_than_1:
     mov r10, rsi ; przenosimy n do r10
@@ -263,17 +261,43 @@ polynomial_degree:
     call to_bigint
     add rsp, 8
     pop r10
-    
-    
+
     ; teraz w rax jest wynikowa tablica, którą będziemy zmieniać
     mov rcx, rax ; przeniesienie wynikowej tablicy do rcx
     mov r11, r10
     shr r11, 3
     add r11, 2 ; teraz w r11 jest n/8+2
     mov rbx, 0 ; zerowanie licznika iteracji
+
+    ; teraz sprawdzimy, czy w tablicy są od razu same zera, jeśli tak to zwrócimy -1
+    push rdi
+    push rsi
+    push rdx
+    mov rdi, rcx
+    mov rsi, r10
+    mov rdx, r11
+    push rcx
+    push r10
+    push r11
+    call check_if_zero
+    pop r11
+    pop r10
+    pop rcx
+    pop rdx
+    pop rsi
+    pop rdi
+    mov rbx, -1
+    cmp rax, 0
+    je main_exit
+    mov rbx, 0
+    
+    
+    
+    
     main_loop:
         mov rdi, rcx
         mov rsi, r10 ; przeniesienie argumentów dla iteracji
+        mov rdx, r11
         push rcx
         push r10
         push r11
@@ -285,6 +309,7 @@ polynomial_degree:
         pop rcx
         mov rdi, rcx
         mov rsi, r10
+        dec rsi ; bo sprawdzamy k-1 liczb 
         mov rdx, r11 ; przenoszenie argumentów dla check_if_zero
         push rcx
         push r10
@@ -306,7 +331,6 @@ polynomial_degree:
 
     main_exit:
         mov rax, rbx
-        dec rax
         pop rbx
         ret
 
