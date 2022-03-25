@@ -18,7 +18,7 @@ to_bigint:
 ; rdx - początkowa tablica, z której bierzemy dane, i iteracja po niej
 ; r8, r9 - pomocnicze
 ; rsi - n
-; r10 - n/8+2
+; r10 - n/8+4
 ; r11 - iteracja po wynikowej tablicy 
 ; r12 - iteracja po wnętrzach podtablic
 ; r13 - counter wewnętrznej pętli
@@ -37,7 +37,7 @@ mov rcx, rax ; teraz wynikowa tablica jest w rcx
 
 mov r10, rsi
 shr r10, 3 ; dzielenie przez 8
-add r10, 2 ; teraz r10 = n/8+2
+add r10, 4 ; teraz r10 = n/8+4
 
 
 mov rbx, 0 ; counter pętli
