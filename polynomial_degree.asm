@@ -1,5 +1,3 @@
-section .bss
-
 section .text
 
 extern malloc
@@ -55,7 +53,7 @@ substract:
         ret
 
 
-
+global iteracja:
 iteracja:
 ; rcx - wynikowa tablica
 ; r10 - iterator po niej 
@@ -104,6 +102,7 @@ iteracja_exit:
     
     
 
+global check_if_zero:
 check_if_zero:
 ; rdi to tablica tablic, które mamy sprawdzić
 ; rsi to ich liczba
@@ -113,6 +112,7 @@ check_if_zero:
 push rbx
 mov rbx, 0 ; counter zewnętrznej pętli
 mov rax, 0
+;add rax, [rdi+8] ; tylko do testu ta linijka 
 extern_loop:
     mov rcx, 0 ; counter wewnętrznej pętli
     mov r10, [rdi] ; wskaźnik do aktualnie przeglądanej tablicy
@@ -120,6 +120,7 @@ extern_loop:
     ;add rax, [rdi]
     intern_loop:
         mov r8, [r10] ; w r8 będzie inspektowana liczba
+        ; okay, czyli tu jesteśmy, tylko uważamy, że r8 to 0
         cmp r8, 0
         jne exit_positive
         inc rcx
@@ -130,14 +131,14 @@ extern_loop:
     add rdi, 8
     cmp rbx, rsi
     jne extern_loop
-    je check_exit
+    je exit
 exit_positive:
     mov rax, 1 ; to powinno tu być, wykreślone tylko do testu
-check_exit:
+exit:
     pop rbx
     ret
 
-
+global to_bigint
 to_bigint:
 ; rbx - counter pętel zewnętrznych
 ; rcx - adres wynikowej tablicy (na koniec przekażę go do rax)
@@ -206,7 +207,15 @@ loop_move:
     mov r12, [r11]
     mov r8, 0
     mov [r12], r8 ; czyścimy to co jest w [r12] zerem zanim tam coś zapiszemy
-    mov r8d, [rdx] ; to powinno być
+    mov r8d, [rdx]
+    cmp r8d, 0 ; nowa linijka
+    jge .positive ; nowa linijka
+    ; tutaj jesteśmy jeśli przenoszona wartość jest ujemna
+    mov r9, 0 ; nowa linijka
+    sub r9d, r8d ; nowa linijka, mamy |[rdx]| w r9d
+    mov r8, 0
+    sub r8, r9
+    .positive: ; nowa linijka
     mov [r12], r8
     mov r13, 1 ; zerowanie countera
 
@@ -225,12 +234,14 @@ loop_move:
     jne loop_move
 
 
-to_bigint_exit:
+check_exit:
 mov rax, rcx ; to powinno byc
 pop r13
 pop r12
 pop rbx
 ret
+
+
 
 
 
@@ -333,6 +344,3 @@ polynomial_degree:
         mov rax, rbx
         pop rbx
         ret
-
-
-section .data
