@@ -8,6 +8,11 @@ section .data
 ; size_t ma 8 bajtów
 
 section .text
+
+extern malloc
+
+global to_bigint
+to_bigint:
 ; rbx - counter pętel zewnętrznych
 ; rcx - adres wynikowej tablicy (na koniec przekażę go do rax)
 ; rdx - początkowa tablica, z której bierzemy dane, i iteracja po niej
@@ -17,9 +22,6 @@ section .text
 ; r11 - iteracja po wynikowej tablicy 
 ; r12 - iteracja po wnętrzach podtablic
 ; r13 - counter wewnętrznej pętli
-extern malloc
-global to_bigint
-to_bigint:
 push rbx
 push r12
 push r13
@@ -78,7 +80,15 @@ loop_move:
     mov r12, [r11]
     mov r8, 0
     mov [r12], r8 ; czyścimy to co jest w [r12] zerem zanim tam coś zapiszemy
-    mov r8d, [rdx] ; to powinno być
+    mov r8d, [rdx]
+    cmp r8d, 0 ; nowa linijka
+    jge .positive ; nowa linijka
+    ; tutaj jesteśmy jeśli przenoszona wartość jest ujemna
+    mov r9, 0 ; nowa linijka
+    sub r9d, r8d ; nowa linijka, mamy |[rdx]| w r9d
+    mov r8, 0
+    sub r8, r9
+    .positive: ; nowa linijka
     mov [r12], r8
     mov r13, 1 ; zerowanie countera
 
@@ -97,7 +107,7 @@ loop_move:
     jne loop_move
 
 
-exit:
+check_exit:
 mov rax, rcx ; to powinno byc
 pop r13
 pop r12
