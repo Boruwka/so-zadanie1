@@ -65,7 +65,7 @@ iteracja:
 ; r10 - iterator po niej 
 ; rbx - counter pętli po tablicy
 ; r11 - n-1
-; r12 - n / 8 + 2
+; r12 - n / 8 + 2, lub rozmiar podtablic po prostu 
 ; r8, r9 - pomocnicze
 
 push rbx
@@ -73,9 +73,10 @@ push r12
 mov rcx, rdi ; przeniesienie adresu wynikowej tablicy
 mov r10, rcx ; przeniesienie adresu tablicy do iteratora po niej
 mov r11, rsi ; przeniesienie n
-mov r12, r11
-shr r12, 3 ; dzielenie przez 8
-add r12, 2 ; teraz w r12 mamy n/8+2
+mov r12, rdx ; rozmiar podtabilc będzie podany jako argument
+;mov r12, r11
+;shr r12, 3 ; dzielenie przez 8
+;add r12, 2 ; teraz w r12 mamy n/8+2
 dec r11 
 mov rbx, 0
 
