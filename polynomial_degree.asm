@@ -48,8 +48,6 @@ substract:
         ret
 
 
-section .data
-
 
 global iteracja:
 iteracja:
@@ -135,6 +133,8 @@ exit_positive:
 exit:
     pop rbx
     ret
+
+
 
 global to_bigint
 to_bigint:
@@ -300,9 +300,7 @@ polynomial_degree:
     je main_exit
     mov rbx, 0
     
-    
-    
-    
+
     main_loop:
         mov rdi, rcx
         mov rsi, r10 ; przeniesienie argumentów dla iteracji
