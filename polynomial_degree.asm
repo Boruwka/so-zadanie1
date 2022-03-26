@@ -9,6 +9,9 @@ substract:
     ; nie trzymamy liczby znakowej na początku
     ; po prostu odejmujemy, jak będzie overflow w którąś stronę to go naprawiamy
 
+    ; void substract(__int64_t* tab1, __int64_t* tab2, __int64_t n)
+    ; otrzymuje dwa biginty i zamienia pierwszy na ich różnicę
+
     ; w rdi przyjmuje adres tablicy do odjęcia i nim iterujemy
     ; w rsi drugiej tablicy i też nim iterujemy
     ; w rdx ich rozmiar
@@ -24,9 +27,9 @@ substract:
     substraction_loop:
         mov r8, [rdi]
         mov r9, [rsi]
-        sub r8, r9 ; jebać overflowy
+        sub r8, r9
         pushf
-        add r8, r10; dodajemy flagę overflow
+        add r8, r10; dodajemy do wyniku overflow wynikły na poprzedniej pozycji
         mov r10, 0
         popf
         jno .no_overflow
@@ -34,7 +37,7 @@ substract:
         mov r10, -1
         popf
         jns .no_overflow
-        mov r10, 1
+        mov r10, 1 ; overflow dla następnej pozycji będzie równy 1 jeśli zoverflowowało się w górę, i -1 jeśli w dół
         .no_overflow:
         mov [rdi], r8
         inc rbx
@@ -51,6 +54,10 @@ substract:
 
 global iteracja:
 iteracja:
+; void iteracja(__int64_t** tab, __int64_t n, __int64_t m)
+; otrzymuje tablicę n bigintów o rozmiarze n
+; i zamienia jej i-ty element dla różnicę i-tego i (i+1)-wszego
+; odpowiada to zamianie reprezentacji wielomianu na reprezentację jego pochodnej, więc stopień zmniejsza się o 1
 ; rcx - wynikowa tablica
 ; r10 - iterator po niej 
 ; rbx - counter pętli po tablicy
@@ -100,10 +107,11 @@ iteracja_exit:
 
 global check_if_zero:
 check_if_zero:
+; __int64_t check_if_zero(__int64_t** tab1, __int64_t n, __int64_t m)
+; zwraca 1 jeśli w tablicy bigintów są niezerowe wartości, 0 jeśli są same zera
 ; rdi to tablica tablic, które mamy sprawdzić
 ; rsi to ich liczba
 ; rdx to liczba elementów każdej
-; do rax zwracamy 1 jeśli jest niezero, w przeciwnym razie 0 jeśli same zera
 
 push rbx
 mov rbx, 0 ; counter zewnętrznej pętli
@@ -116,7 +124,6 @@ extern_loop:
     ;add rax, [rdi]
     intern_loop:
         mov r8, [r10] ; w r8 będzie inspektowana liczba
-        ; okay, czyli tu jesteśmy, tylko uważamy, że r8 to 0
         cmp r8, 0
         jne exit_positive
         inc rcx
@@ -129,7 +136,7 @@ extern_loop:
     jne extern_loop
     je exit
 exit_positive:
-    mov rax, 1 ; to powinno tu być, wykreślone tylko do testu
+    mov rax, 1
 exit:
     pop rbx
     ret
@@ -137,6 +144,9 @@ exit:
 
 
 global to_bigint
+; wszystkie są globalami bo tak się łątiwej je testuje, ale jeśli w czymś to przeszkadza, to wystarczy wywalić te linijki
+; __int64_t** to_bigint(int const* tab, size_t n)
+; przyjmuje tablicę z wejścia i zwraca tablicę n bigintów o rozmiarze n/8+4
 to_bigint:
 ; rbx - counter pętel zewnętrznych
 ; rcx - adres wynikowej tablicy (na koniec przekażę go do rax)
@@ -168,6 +178,7 @@ add r10, 4 ; teraz r10 = n/8+4
 mov rbx, 0 ; counter pętli
 mov r11, rcx
 
+; mallocujemy dla każdego z n elementów n/8+4 bajtów i zapisujemy w tablicy otrzymany wskaźnik
 loop_alloc:
     mov rdi, r10
     imul rdi, 8
@@ -200,7 +211,7 @@ mov r11, rcx; zerujemy iterację po wynikowej tablicy
 ; r13 - counter wewnętrznej pętli
 
 
-    
+; zapisujemy w podtablicach wartości z wejścia i dopełniamy je zerami    
 loop_move:
     mov r12, [r11]
     mov r8, 0
@@ -245,11 +256,15 @@ ret
 
 global polynomial_degree:
 polynomial_degree:
+; w moim rozwiązaniu reprezentuję każdą liczbę jako tablicę n/8+4 bajtów
+; suma liczb a_i * 2^(63*i) jest równa trzymanej liczbie, gdzie i to numer pozycji
+; mimo, że reprezentacja może być niejednoznaczna
+; nas jednak interesuje tylko, czy pochodna jest równa zero czy nierówna
 ; rcx - wynikowa tablica
 ; r8, r9 - pomocnicze
 ; rbx - licznik iteracji
 ; r10 - n zmniejszające się
-; r11 - n/8+2
+; r11 - n/8+4
 
     push rbx
     
@@ -309,26 +324,26 @@ polynomial_degree:
         push r10
         push r11
         sub rsp, 8
-        call iteracja
+        call iteracja ; zamieniamy i-tą liczbę w tablicy na różnicę i-tej i (i+1)-wszej, czyli pochodną dyskretną
         add rsp, 8 ; wyrównanie stosu
         pop r11
         pop r10
         pop rcx
         mov rdi, rcx
         mov rsi, r10
-        dec rsi ; bo sprawdzamy k-1 liczb 
+        dec rsi ; bo sprawdzamy o jedną mniej liczbę niż przed iteracją
         mov rdx, r11 ; przenoszenie argumentów dla check_if_zero
         push rcx
         push r10
         push r11
         sub rsp, 8
-        call check_if_zero
+        call check_if_zero ; sprawdzamy, czy pochodne się wyzerowały
         add rsp, 8
         pop r11
         pop r10
         pop rcx
         cmp rax, 0
-        je main_exit
+        je main_exit ; pochodne się wyzerowały
         ; tutaj jesteśmy jeśli nie ma samych zer
         dec r10 ; zmniejszamy n bo mniej liczb rozważamy już
         inc rbx ; zwiększamy counter pętli
