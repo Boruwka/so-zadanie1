@@ -16,33 +16,27 @@ substract:
     ; w rdx ich rozmiar
     ; rbx - counter pętli
     ; r8, r9 - pomocnicze
-    ; r10 - kopia flagi overflow (xd)
-    ; r11 - kopia flagi sign (też xd, ale te flagi się ciężko obsługuje)
+    ; r10 - overflow, który mamy dodać do następnego
 
 
     push rbx
     mov rbx, 0 ; counter pętli
-    mov r10, 0
-    mov r11, 0 ; zerujemy kopie flag
+    mov r10, 0 ; overflow
+
     substraction_loop:
         mov r8, [rdi]
         mov r9, [rsi]
         sub r8, r9 ; jebać overflowy
-        cmp r10, 0
-        je .no_overflow_prev ; chodzi o overflow w poprzednim odejmowaniu
-        dec r8
-        jmp .no_overflow_prev
-        cmp r11, 0
-        je .positive_overflow_prev
-        .positive_overflow_prev:
-        inc r8
-        .no_overflow_prev: ; nie musimy dodawać poprzedniego overflowu
+        pushf
+        add r8, r10; dodajemy flagę overflow
         mov r10, 0
+        popf
         jno .no_overflow
-        mov r10, 1
-        mov r11, 0
+        pushf
+        mov r10, -1
+        popf
         jns .no_overflow
-        mov r11, 1
+        mov r10, 1
         .no_overflow:
         mov [rdi], r8
         inc rbx
