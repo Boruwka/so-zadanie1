@@ -1,6 +1,7 @@
 section .text
 
 extern malloc
+extern free
 
 global substract
 substract:
@@ -250,7 +251,38 @@ pop r12
 pop rbx
 ret
 
+free_all:
+    ; zwalnia pamięć z wynikowej tablicy, do której wskaźnik dostaje w rdi
+    ; oraz jej podtablic
+    ; rcx - wynikowa tablica
+    ; rdx - iterator po niej 
+    ; rsi - n
+    mov rcx, rdi
+    mov rdx, rcx
+    push rbx
+    mov rbx, 0
+    
+    free_loop:
+        push rcx
+        push rdx
+        push rsi
+        mov rdi, [rdx]
+        call [rel free wrt ..got]
+        pop rsi
+        pop rdx
+        pop rcx
+        inc rbx
+        add rdx, 8
+        cmp rbx, rsi
+        jne free_loop
 
+    free_exit:
+        mov rdi, rcx
+        call [rel free wrt ..got]
+        pop rbx
+        ret
+    
+    
 
 
 
@@ -265,8 +297,10 @@ polynomial_degree:
 ; rbx - licznik iteracji
 ; r10 - n zmniejszające się
 ; r11 - n/8+4
+; r12 - n
 
     push rbx
+    push r12
     
     ; zaczniemy od odifowania n = 1, bo dla niego nie działa pętla
     cmp rsi, 1
@@ -274,16 +308,15 @@ polynomial_degree:
     mov rbx, -1
     mov r8d, [rdi]
     cmp r8, 0
-    je main_exit
+    je main_exit_without_free
     mov rbx, 0
-    jmp main_exit
+    jmp main_exit_without_free
 
     n_greater_than_1:
     mov r10, rsi ; przenosimy n do r10
+    mov r12, rsi
     push r10
-    sub rsp, 8
     call to_bigint
-    add rsp, 8
     pop r10
 
     ; teraz w rax jest wynikowa tablica, którą będziemy zmieniać
@@ -303,7 +336,9 @@ polynomial_degree:
     push rcx
     push r10
     push r11
+    sub rsp, 8
     call check_if_zero
+    add rsp, 8
     pop r11
     pop r10
     pop rcx
@@ -323,9 +358,7 @@ polynomial_degree:
         push rcx
         push r10
         push r11
-        sub rsp, 8
         call iteracja ; zamieniamy i-tą liczbę w tablicy na różnicę i-tej i (i+1)-wszej, czyli pochodną dyskretną
-        add rsp, 8 ; wyrównanie stosu
         pop r11
         pop r10
         pop rcx
@@ -336,9 +369,7 @@ polynomial_degree:
         push rcx
         push r10
         push r11
-        sub rsp, 8
         call check_if_zero ; sprawdzamy, czy pochodne się wyzerowały
-        add rsp, 8
         pop r11
         pop r10
         pop rcx
@@ -352,6 +383,13 @@ polynomial_degree:
     
 
     main_exit:
+        mov rdi, rcx
+        mov rsi, r12 ; argumenty dla free
+        sub rsp, 8
+        call free_all
+        add rsp, 8
+    main_exit_without_free:
         mov rax, rbx
+        pop r12
         pop rbx
         ret
